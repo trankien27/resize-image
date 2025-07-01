@@ -183,7 +183,13 @@ function App() {
       </div>
 
       <div className="container">
-        <div className="dropzone" onClick={() => document.getElementById("fileInput")?.click()}>
+        <div className="dropzone" 
+          onDrop={(e) => {
+    e.preventDefault();
+    handleFiles(e.dataTransfer.files); // Xử lý file kéo vào
+  }}
+  onDragOver={(e) => e.preventDefault()} // Cho phép kéo vào
+        onClick={() => document.getElementById("fileInput")?.click()}>
           <p>📂 Click hoặc kéo & thả ảnh / file .zip vào đây</p>
           <input
             id="fileInput"

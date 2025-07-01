@@ -70,6 +70,13 @@ body {
   background: #3c34ca;
 
 }
+.loading {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 2rem;
+  color: #6366f1;
+}
 
 .login-btn:hover {
   background: #4338ca;
