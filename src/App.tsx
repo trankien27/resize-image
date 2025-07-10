@@ -1,4 +1,4 @@
-// File: src/App.tsx
+// App.tsx (Đã thêm kéo folder và nút xóa tất cả ảnh)
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { useRef, useState, useEffect } from "react";
@@ -15,29 +15,13 @@ interface ResizedImage {
 }
 
 const sizeMap: Record<string, [number, number]> = {
-  "158A": [1080, 1720],
-  "158B": [1080, 1720],
-  "158C": [1080, 1720],
-  "158D": [1720, 1080],
-  "158E": [1720, 1080],
-  "264A": [1020, 3040],
-  "264B": [1020, 3040],
-  "264C": [3040, 1020],
-  "264D": [3040, 1020],
-  "264E": [2040, 3040],
-  "461A": [2040, 3040],
-  "461B": [3040, 2040],
-  "463A": [2040, 3040],
-  "463B": [3040, 2040],
-  "464A": [2040, 3040],
-  "464B": [3040, 2040],
-  "466A": [2040, 3040],
-  "466B": [3040, 2040],
-  "468A": [2040, 3040],
-  "468B": [3040, 2040],
-  "620A": [3060, 10200],
-  "620B": [10200, 3060],
-  "620C": [10200, 3060],
+  "158A": [1080, 1720], "158B": [1080, 1720], "158C": [1080, 1720],
+  "158D": [1720, 1080], "158E": [1720, 1080],
+  "264A": [1020, 3040], "264B": [1020, 3040], "264C": [3040, 1020], "264D": [3040, 1020], "264E": [2040, 3040],
+  "461A": [2040, 3040], "461B": [3040, 2040], "463A": [2040, 3040], "463B": [3040, 2040],
+  "464A": [2040, 3040], "464B": [3040, 2040], "466A": [2040, 3040], "466B": [3040, 2040],
+  "468A": [2040, 3040], "468B": [3040, 2040],
+  "620A": [3060, 10200], "620B": [10200, 3060], "620C": [10200, 3060],
 };
 
 function App() {
@@ -73,9 +57,7 @@ function App() {
 
   const handleImageFile = (file: File) => {
     const fileName = file.name.split(".")[0];
-    const code = Object.keys(sizeMap).find((k) =>
-      fileName.toUpperCase().includes(k)
-    );
+    const code = Object.keys(sizeMap).find((k) => fileName.toUpperCase().includes(k));
     const [targetW, targetH] = sizeMap[code ?? ""] ?? [null, null];
 
     const reader = new FileReader();
@@ -162,7 +144,9 @@ function App() {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
- return (
+  const clearAll = () => setImages([]);
+
+  return (
     <div className={darkMode ? "app dark" : "app"}>
       <div className="taskbar">
         <div className="taskbar-left">
@@ -175,27 +159,26 @@ function App() {
           </nav>
         </div>
         <div className="taskbar-right">
-          <button onClick={() => setDarkMode(!darkMode)}>
-            {darkMode ? "🌞 Light" : "🌙 Dark"}
-          </button>
+          <button onClick={() => setDarkMode(!darkMode)}>{darkMode ? "🌞 Light" : "🌙 Dark"}</button>
           <button className="login-btn">Đăng nhập</button>
         </div>
       </div>
 
       <div className="container">
-        <div className="dropzone" 
+        <div className="dropzone"
           onDrop={(e) => {
-    e.preventDefault();
-    handleFiles(e.dataTransfer.files); // Xử lý file kéo vào
-  }}
-  onDragOver={(e) => e.preventDefault()} // Cho phép kéo vào
-        onClick={() => document.getElementById("fileInput")?.click()}>
-          <p>📂 Click hoặc kéo & thả ảnh / file .zip vào đây</p>
+            e.preventDefault();
+            handleFiles(e.dataTransfer.files);
+          }}
+          onDragOver={(e) => e.preventDefault()}
+          onClick={() => document.getElementById("fileInput")?.click()}>
+          <p>📂 Click hoặc kéo & thả ảnh / file .zip / folder vào đây</p>
           <input
             id="fileInput"
             type="file"
             accept=".zip,image/*"
             multiple
+            webkitdirectory="true"
             onChange={(e) => handleFiles(e.target.files!)}
             className="hidden"
           />
@@ -205,7 +188,10 @@ function App() {
           <div className="image-panel">
             <div className="panel-header">
               <h2>📋 Danh sách ảnh ({images.length})</h2>
-              <button onClick={downloadAll} className="download-all">📦 Tải tất cả (.zip)</button>
+              <div>
+                <button onClick={downloadAll} className="download-all">📦 Tải tất cả (.zip)</button>
+                <button onClick={clearAll} className="btn-remove" style={{ marginLeft: 10 }}>🗑️ Xóa tất cả</button>
+              </div>
             </div>
 
             <div className="image-grid">
