@@ -3,6 +3,8 @@ import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { useRef, useState, useEffect } from "react";
 import './App.css';
+import ComingSoonModal from "./ComingSoonModal";
+
 
 interface ResizedImage {
   name: string;
@@ -26,6 +28,7 @@ const sizeMap: Record<string, [number, number]> = {
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [isModalOpen, setModalOpen] = useState(false);
   const [images, setImages] = useState<ResizedImage[]>([]);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState<boolean>(false);
@@ -33,7 +36,13 @@ function App() {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
+  const handleShowComingSoon = () => {
+    setModalOpen(true);
+  };
 
+  const handleCloseModal = () => {
+    setModalOpen(false);
+  };
   const handleFiles = (files: FileList) => {
     Array.from(files).forEach(async (file) => {
       const ext = file.name.split(".").pop()?.toLowerCase();
@@ -151,16 +160,16 @@ function App() {
       <div className="taskbar">
         <div className="taskbar-left">
           <nav className="menu">
-            <a href="#">Compress</a>
+            <a href="#" onClick={handleShowComingSoon}>Compress</a>
             <a href="#" className="active">Resize</a>
-            <a href="#">Crop</a>
-            <a href="#">Convert</a>
-            <a href="#">More</a>
+            <a href="#" onClick={handleShowComingSoon}>Crop</a>
+            <a href="#" onClick={handleShowComingSoon}>Convert</a>
+            <a href="#" onClick={handleShowComingSoon}>More</a>
           </nav>
         </div>
         <div className="taskbar-right">
           <button onClick={() => setDarkMode(!darkMode)}>{darkMode ? "🌞 Light" : "🌙 Dark"}</button>
-          <button className="login-btn">Đăng nhập</button>
+          <button className="login-btn" onClick={handleShowComingSoon}>Đăng nhập</button>
         </div>
       </div>
 
@@ -247,6 +256,7 @@ function App() {
           </div>
         )}
       </div>
+      <ComingSoonModal isOpen={isModalOpen} onClose={handleCloseModal} />
     </div>
   );
 }
