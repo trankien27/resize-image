@@ -178,9 +178,11 @@ function App() {
             type="file"
             accept=".zip,image/*"
             multiple
-            webkitdirectory="true"
             onChange={(e) => handleFiles(e.target.files!)}
             className="hidden"
+            ref={(ref) => {
+              if (ref) (ref as HTMLInputElement).webkitdirectory = true;
+            }}
           />
         </div>
 
