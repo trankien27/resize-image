@@ -140,120 +140,338 @@ const ThemeUploadModal = ({ isOpen, onClose, onUpload, unmappedImageName, themeC
     };
 
     return (
-        <div className="modal-overlay">
-            <div className="modal-content">
-                <h2>Upload Theme</h2>
+        <div className="modal-overlay" style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+        }}>
+            <div className="modal-content" style={{
+                background: 'white',
+                borderRadius: '8px',
+                width: '100%',
+                maxWidth: '600px',
+                maxHeight: '90vh',
+                overflow: 'auto'
+            }}>
+                {/* Header */}
+                <div style={{
+                    padding: '20px 24px',
+                    borderBottom: '1px solid #e5e7eb',
+                    fontSize: '18px',
+                    fontWeight: '600'
+                }}>
+                    Upload Theme
+                </div>
 
-                {/* Profile Management */}
-                <div className="profile-actions">
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
-                        <select
-                            value={currentProfileName}
-                            onChange={(e) => loadProfile(e.target.value)}
-                            style={{ flex: 1 }}
-                        >
-                            <option value="">-- Chọn Profile --</option>
-                            {Object.keys(profiles).map(name => (
-                                <option key={name} value={name}>{name}</option>
-                            ))}
-                        </select>
-                        {currentProfileName && (
-                            <button
-                                onClick={() => deleteProfile(currentProfileName)}
-                                className="btn-profile btn-clear-profile"
-                                type="button"
-                                style={{ padding: '6px 10px' }}
+                {/* Content */}
+                <div style={{ padding: '24px' }}>
+                    {/* Profile Management */}
+                    <div className="profile-actions" style={{
+                        padding: '16px',
+                        background: '#f9fafb',
+                        borderRadius: '6px',
+                        marginBottom: '20px'
+                    }}>
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                            <select
+                                value={currentProfileName}
+                                onChange={(e) => loadProfile(e.target.value)}
+                                style={{
+                                    flex: 1,
+                                    padding: '8px 12px',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '6px',
+                                    fontSize: '14px'
+                                }}
                             >
-                                �️
+                                <option value="">-- Chọn Profile --</option>
+                                {Object.keys(profiles).map(name => (
+                                    <option key={name} value={name}>{name}</option>
+                                ))}
+                            </select>
+                            {currentProfileName && (
+                                <button
+                                    onClick={() => deleteProfile(currentProfileName)}
+                                    className="btn-profile btn-clear-profile"
+                                    type="button"
+                                    style={{
+                                        padding: '8px 12px',
+                                        background: '#ef4444',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    🗑️
+                                </button>
+                            )}
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <input
+                                type="text"
+                                placeholder="Tên profile mới..."
+                                value={newProfileName}
+                                onChange={(e) => setNewProfileName(e.target.value)}
+                                style={{
+                                    flex: 1,
+                                    padding: '8px 12px',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '6px',
+                                    fontSize: '14px'
+                                }}
+                            />
+                            <button
+                                onClick={saveProfile}
+                                className="btn-profile btn-save-profile"
+                                type="button"
+                                style={{
+                                    padding: '8px 16px',
+                                    background: '#10b981',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                💾 Lưu mới
                             </button>
-                        )}
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                        <input
-                            type="text"
-                            placeholder="Tên profile mới..."
-                            value={newProfileName}
-                            onChange={(e) => setNewProfileName(e.target.value)}
-                            style={{ flex: 1, padding: '6px 12px', borderRadius: '6px', border: '1px solid #d1d5db' }}
-                        />
-                        <button onClick={saveProfile} className="btn-profile btn-save-profile" type="button">
-                            � Lưu mới
-                        </button>
-                    </div>
-                </div>
 
-                <div className="form-group">
-                    <label>Tên Theme:</label>
-                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
-                </div>
-                <div className="form-group">
-                    <label>Màu sắc:</label>
-                    <div style={{ display: "flex", gap: "10px" }}>
-                        <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
-                        <input type="text" value={color} onChange={(e) => setColor(e.target.value)} />
-                    </div>
-                </div>
-                <div className="form-group">
-                    <label>Danh mục:</label>
-                    <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-                        <option value="">-- Chọn danh mục --</option>
-                        {themeCategories.map(cat => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                        ))}
-                    </select>
-                </div>
-                <div className="form-group">
-                    <label>Theme Lists:</label>
-                    {selectedThemeLists.length > 0 && (
-                        <div className="tag-container">
-                            {selectedThemeLists.map(id => {
-                                const list = themeLists.find(l => l.id === id);
-                                return list ? (
-                                    <div key={id} className="tag">
-                                        <span>{list.name}</span>
-                                        <button type="button" onClick={() => removeThemeList(id)} className="tag-remove">×</button>
+                    {/* Form Fields */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {/* Tên Theme */}
+                        <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '12px', alignItems: 'center' }}>
+                            <label style={{ fontSize: '14px', fontWeight: '500' }}>Tên Theme:</label>
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                style={{
+                                    padding: '8px 12px',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '6px',
+                                    fontSize: '14px'
+                                }}
+                            />
+                        </div>
+
+                        {/* Màu sắc */}
+                        <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '12px', alignItems: 'center' }}>
+                            <label style={{ fontSize: '14px', fontWeight: '500' }}>Màu sắc:</label>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <input
+                                    type="color"
+                                    value={color}
+                                    onChange={(e) => setColor(e.target.value)}
+                                    style={{ width: '50px', height: '38px', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer' }}
+                                />
+                                <input
+                                    type="text"
+                                    value={color}
+                                    onChange={(e) => setColor(e.target.value)}
+                                    style={{
+                                        flex: 1,
+                                        padding: '8px 12px',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '6px',
+                                        fontSize: '14px'
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Danh mục */}
+                        <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '12px', alignItems: 'center' }}>
+                            <label style={{ fontSize: '14px', fontWeight: '500' }}>Danh mục:</label>
+                            <select
+                                value={categoryId}
+                                onChange={(e) => setCategoryId(e.target.value)}
+                                style={{
+                                    padding: '8px 12px',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '6px',
+                                    fontSize: '14px'
+                                }}
+                            >
+                                <option value="">-- Chọn danh mục --</option>
+                                {themeCategories.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Theme Lists */}
+                        <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '12px', alignItems: 'start' }}>
+                            <label style={{ fontSize: '14px', fontWeight: '500', paddingTop: '8px' }}>Theme Lists:</label>
+                            <div>
+                                {selectedThemeLists.length > 0 && (
+                                    <div className="tag-container" style={{
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                        gap: '6px',
+                                        marginBottom: '8px'
+                                    }}>
+                                        {selectedThemeLists.map(id => {
+                                            const list = themeLists.find(l => l.id === id);
+                                            return list ? (
+                                                <div key={id} className="tag" style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    padding: '4px 10px',
+                                                    background: '#e0e7ff',
+                                                    borderRadius: '4px',
+                                                    fontSize: '13px'
+                                                }}>
+                                                    <span>{list.name}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeThemeList(id)}
+                                                        className="tag-remove"
+                                                        style={{
+                                                            background: 'none',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            fontSize: '16px',
+                                                            color: '#4f46e5',
+                                                            padding: 0,
+                                                            lineHeight: 1
+                                                        }}
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ) : null;
+                                        })}
                                     </div>
-                                ) : null;
-                            })}
+                                )}
+                                <select
+                                    onChange={handleThemeListChange}
+                                    value=""
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '6px',
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    <option value="">-- Chọn để thêm --</option>
+                                    {themeLists.filter(list => !selectedThemeLists.includes(list.id)).map(list => (
+                                        <option key={list.id} value={list.id}>{list.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
-                    )}
-                    <select onChange={handleThemeListChange} value="">
-                        <option value="">-- Chọn để thêm --</option>
-                        {themeLists.filter(list => !selectedThemeLists.includes(list.id)).map(list => (
-                            <option key={list.id} value={list.id}>{list.name}</option>
-                        ))}
-                    </select>
-                </div>
-                <div className="form-group">
-                    <label>Layout List ID:</label>
-                    <input type="text" value={layoutListId} onChange={(e) => setLayoutListId(e.target.value)} />
-                </div>
-                <div className="form-group">
-                    <label>Thumbnail:</label>
-                    {unmappedImageName && !thumbnail ? (
-                        <div style={{ marginBottom: 10, fontSize: '0.9em', color: '#6366f1' }}>
-                            ℹ️ Sử dụng ảnh chưa map: <b>{unmappedImageName}</b>
+
+                        {/* Layout List ID */}
+                        <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '12px', alignItems: 'center' }}>
+                            <label style={{ fontSize: '14px', fontWeight: '500' }}>Layout List ID:</label>
+                            <input
+                                type="text"
+                                value={layoutListId}
+                                onChange={(e) => setLayoutListId(e.target.value)}
+                                style={{
+                                    padding: '8px 12px',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '6px',
+                                    fontSize: '14px'
+                                }}
+                            />
                         </div>
-                    ) : null}
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => setThumbnail(e.target.files?.[0] || null)}
-                    />
-                </div>
-                <div className="form-group" style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
-                    <input
-                        type="checkbox"
-                        checked={isLiveView}
-                        onChange={(e) => setIsLiveView(e.target.checked)}
-                        id="liveview"
-                    />
-                    <label htmlFor="liveview" style={{ marginBottom: 0 }}>Hiển thị trên Liveview</label>
+
+                        {/* Thumbnail */}
+                        <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '12px', alignItems: 'start' }}>
+                            <label style={{ fontSize: '14px', fontWeight: '500', paddingTop: '8px' }}>Thumbnail:</label>
+                            <div>
+                                {unmappedImageName && !thumbnail ? (
+                                    <div style={{
+                                        padding: '8px 12px',
+                                        background: '#eff6ff',
+                                        border: '1px solid #bfdbfe',
+                                        borderRadius: '6px',
+                                        fontSize: '13px',
+                                        marginBottom: '8px',
+                                        color: '#1e40af'
+                                    }}>
+                                        ℹ️ Sử dụng ảnh chưa map: <strong>{unmappedImageName}</strong>
+                                    </div>
+                                ) : null}
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => setThumbnail(e.target.files?.[0] || null)}
+                                    style={{ fontSize: '14px' }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Liveview */}
+                        <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '12px', alignItems: 'center' }}>
+                            <label style={{ fontSize: '14px', fontWeight: '500' }}>Hiển thị:</label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={isLiveView}
+                                    onChange={(e) => setIsLiveView(e.target.checked)}
+                                    id="liveview"
+                                    style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                                />
+                                <span style={{ fontSize: '14px' }}>Hiển thị trên Liveview</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="modal-actions">
-                    <button onClick={onClose} className="btn-cancel">Hủy</button>
-                    <button onClick={handleSubmit} className="btn-save">Upload</button>
+                {/* Footer */}
+                <div className="modal-actions" style={{
+                    padding: '16px 24px',
+                    borderTop: '1px solid #e5e7eb',
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: '12px'
+                }}>
+                    <button
+                        onClick={onClose}
+                        className="btn-cancel"
+                        style={{
+                            padding: '8px 20px',
+                            background: 'white',
+                            color: '#374151',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: '500'
+                        }}
+                    >
+                        Hủy
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        className="btn-save"
+                        style={{
+                            padding: '8px 20px',
+                            background: '#6366f1',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: '500'
+                        }}
+                    >
+                        Upload
+                    </button>
                 </div>
             </div>
         </div>
