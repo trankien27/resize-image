@@ -1,10 +1,14 @@
-// App.tsx (Đã thêm kéo folder và nút xóa tất cả ảnh)
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { useRef, useState, useEffect } from "react";
 import './App.css';
 import ComingSoonModal from "./ComingSoonModal";
+import ThemeUploadModal from "./ThemeUploadModal";
+import { ToastContainer } from "./Toast";
+import type { ToastMessage } from "./Toast";
 
+// API Configuration
+const API_BASE_URL = 'http://trankien.somee.com/publish-portal/api';
 
 interface ResizedImage {
   name: string;
@@ -14,35 +18,134 @@ interface ResizedImage {
   isCustom: boolean;
   customWidth: number;
   customHeight: number;
+  layoutId?: number;
 }
 
-const sizeMap: Record<string, [number, number]> = {
-  "158A": [1080, 1720], "158B": [1080, 1720], "158C": [1080, 1720],
-  "158D": [1720, 1080], "158E": [1720, 1080],
-  "264A": [1020, 3040], "264B": [1020, 3040], "264C": [3040, 1020], "264D": [3040, 1020], "264E": [2040, 3040],
-  "461A": [2040, 3040], "461B": [3040, 2040], "463A": [2040, 3040], "463B": [3040, 2040],
-  "464A": [2040, 3040], "464B": [3040, 2040], "466A": [2040, 3040], "466B": [3040, 2040],
-  "468A": [2040, 3040], "468B": [3040, 2040],
-  "620A": [3060, 10200], "620B": [10200, 3060], "620C": [10200, 3060],
-};
+interface LayoutItem {
+  id: number;
+  code: string;
+  name: string;
+  width: number;
+  height: number;
+}
+
+interface ThemeCategory {
+  id: number;
+  name: string;
+  orderNo: number;
+  isActive: boolean;
+}
+
+interface ThemeCategoryResponse {
+  message: string;
+  data: {
+    totalItems: number;
+    totalPages: number;
+    items: ThemeCategory[];
+  };
+}
+
+interface ThemeList {
+  id: number;
+  name: string;
+  orderNo: number;
+  isActive: boolean;
+}
+
+interface ThemeListResponse {
+  message: string;
+  data: {
+    totalItems: number;
+    totalPages: number;
+    items: ThemeList[];
+  };
+}
+
+interface LayoutResponse {
+  message: string;
+  data: {
+    items: LayoutItem[];
+  };
+}
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
+  const [isUploadModalOpen, setUploadModalOpen] = useState(false);
   const [images, setImages] = useState<ResizedImage[]>([]);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState<boolean>(false);
+  const [layoutMap, setLayoutMap] = useState<Record<string, LayoutItem>>({});
+  const [themeCategories, setThemeCategories] = useState<ThemeCategory[]>([]);
+  const [themeLists, setThemeLists] = useState<ThemeList[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
-  const handleShowComingSoon = () => {
-    setModalOpen(true);
+
+  const addToast = (message: string, type: "success" | "error" | "info" = "info") => {
+    setToasts(prev => [...prev, { id: Date.now(), message, type }]);
   };
 
-  const handleCloseModal = () => {
-    setModalOpen(false);
+  const removeToast = (id: number) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch layouts
+        const layoutResponse = await fetch(`${API_BASE_URL}/LayoutProxy`, {
+          headers: { 'accept': '*/*' }
+        });
+        const layoutJson: LayoutResponse = await layoutResponse.json();
+        if (layoutJson.message === "Success" && layoutJson.data?.items) {
+          const map: Record<string, LayoutItem> = {};
+          layoutJson.data.items.forEach(item => {
+            if (item.code) {
+              map[item.code] = item;
+            }
+          });
+          setLayoutMap(map);
+        }
+
+        // Fetch theme categories
+        const categoryResponse = await fetch(`${API_BASE_URL}/ThemeCategoryProxy`, {
+          headers: { 'accept': '*/*' }
+        });
+        const categoryJson: ThemeCategoryResponse = await categoryResponse.json();
+        if (categoryJson.message === "Success" && categoryJson.data?.items) {
+          setThemeCategories(categoryJson.data.items.filter(cat => cat.isActive));
+          console.log("category", categoryJson.data.items.filter(cat => cat.isActive));
+        }
+
+        // Fetch theme lists
+        const listResponse = await fetch(`${API_BASE_URL}/ThemeListProxy?pageIndex=0&pageSize=100`, {
+          headers: { 'accept': '*/*' }
+        });
+        const listJson: ThemeListResponse = await listResponse.json();
+        if (listJson.message === "Success" && listJson.data?.items) {
+          setThemeLists(listJson.data.items.filter(list => list.isActive));
+        }
+
+        addToast("Đã tải dữ liệu thành công", "success");
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+        addToast("Không thể tải dữ liệu từ server", "error");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleShowComingSoon = () => setModalOpen(true);
+  const handleCloseModal = () => setModalOpen(false);
+
   const handleFiles = (files: FileList) => {
     Array.from(files).forEach(async (file) => {
       const ext = file.name.split(".").pop()?.toLowerCase();
@@ -59,15 +162,17 @@ function App() {
       } else if (/image\/(png|jpeg|jpg|webp)/.test(file.type)) {
         handleImageFile(file);
       } else if (ext === "rar") {
-        alert("Không hỗ trợ file .rar. Vui lòng dùng .zip.");
+        addToast("Không hỗ trợ file .rar. Vui lòng dùng .zip.", "error");
       }
     });
   };
 
   const handleImageFile = (file: File) => {
     const fileName = file.name.split(".")[0];
-    const code = Object.keys(sizeMap).find((k) => fileName.toUpperCase().includes(k));
-    const [targetW, targetH] = sizeMap[code ?? ""] ?? [null, null];
+    const code = Object.keys(layoutMap).find((k) => fileName.toUpperCase().includes(k));
+    const layoutItem = code ? layoutMap[code] : null;
+    const targetW = layoutItem?.width;
+    const targetH = layoutItem?.height;
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -93,6 +198,7 @@ function App() {
             isCustom: !code,
             customWidth: w,
             customHeight: h,
+            layoutId: layoutItem?.id,
           },
         ]);
       };
@@ -141,6 +247,77 @@ function App() {
     saveAs(zipBlob, "exported-images.zip");
   };
 
+  const handleUploadTheme = async (data: any) => {
+    setIsLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("ThemeCategoryId", data.themeCategoryId);
+      formData.append("Name", data.name);
+      formData.append("Color", data.color);
+      formData.append("IsDisplayOnLiveview", data.isDisplayOnLiveview ? "true" : "false");
+      formData.append("OrderNo", "");
+      formData.append("ThemeListIds", data.themeListIds);
+      formData.append("LayoutListId", data.layoutListId);
+
+      // Determine thumbnail
+      let thumbnailBlob: Blob | File | null = data.thumbnail;
+      let unmappedImageName = "";
+      const unmappedImage = images.find(img => !img.layoutId);
+
+      if (!thumbnailBlob && unmappedImage) {
+        const res = await fetch(unmappedImage.src);
+        thumbnailBlob = await res.blob();
+        unmappedImageName = unmappedImage.name;
+      }
+
+      if (thumbnailBlob) {
+        const filename = (data.thumbnail as File)?.name || unmappedImageName || "thumbnail.png";
+        formData.append("Thumbnail", thumbnailBlob, filename);
+      }
+
+      // Convert base64 images to Blobs
+      const imageBlobs: Record<number, Blob> = {};
+      for (const img of images) {
+        if (img.layoutId) {
+          const res = await fetch(img.src);
+          const blob = await res.blob();
+          imageBlobs[img.layoutId] = blob;
+        }
+      }
+
+      // Only send layoutThemes for layouts that have images
+      let arrayIndex = 0;
+      const maxId = Object.values(layoutMap).reduce((max, item) => Math.max(max, item.id), 0) || 40;
+
+      for (let id = 1; id <= maxId; id++) {
+        if (imageBlobs[id]) {
+          formData.append(`layoutThemes[${arrayIndex}].image`, imageBlobs[id], `layout_${id}.png`);
+          formData.append(`layoutThemes[${arrayIndex}].layoutId`, id.toString());
+          arrayIndex++;
+        }
+      }
+
+      const response = await fetch(`${API_BASE_URL}/ThemeProxy/upload-theme`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        addToast("Upload thành công!", "success");
+        setUploadModalOpen(false);
+      } else {
+        const text = await response.text();
+        addToast(`Upload thất bại! ${text}`, "error");
+        console.error("Upload failed", text);
+      }
+    } catch (e) {
+      console.error(e);
+      addToast("Có lỗi xảy ra khi upload", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const updateImage = (index: number, data: Partial<ResizedImage>) => {
     setImages((prev) => {
       const newList = [...prev];
@@ -151,12 +328,26 @@ function App() {
 
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
+    addToast("Đã xóa ảnh", "info");
   };
 
-  const clearAll = () => setImages([]);
+  const clearAll = () => {
+    setImages([]);
+    addToast("Đã xóa tất cả ảnh", "info");
+  };
+
+  const unmappedImage = images.find(img => !img.layoutId);
 
   return (
     <div className={darkMode ? "app dark" : "app"}>
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="spinner"></div>
+          <p>Đang xử lý...</p>
+        </div>
+      )}
+
       <div className="taskbar">
         <div className="taskbar-left">
           <nav className="menu">
@@ -201,6 +392,7 @@ function App() {
               <h2>📋 Danh sách ảnh ({images.length})</h2>
               <div>
                 <button onClick={downloadAll} className="download-all">📦 Tải tất cả (.zip)</button>
+                <button onClick={() => setUploadModalOpen(true)} className="download-all" style={{ marginLeft: 10, backgroundColor: "#E91E63" }}>🚀 Upload Theme</button>
                 <button onClick={clearAll} className="btn-remove" style={{ marginLeft: 10 }}>🗑️ Xóa tất cả</button>
               </div>
             </div>
@@ -257,6 +449,14 @@ function App() {
         )}
       </div>
       <ComingSoonModal isOpen={isModalOpen} onClose={handleCloseModal} />
+      <ThemeUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        onUpload={handleUploadTheme}
+        unmappedImageName={unmappedImage?.name}
+        themeCategories={themeCategories}
+        themeLists={themeLists}
+      />
     </div>
   );
 }

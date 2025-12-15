@@ -254,3 +254,349 @@ body {
 .hidden {
   display: none;
 }
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.app.dark .modal-content {
+  background: #374151;
+  color: white;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="color"] {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.form-group input[type="file"] {
+  border: 1px dashed #ccc;
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.btn-cancel {
+  background: #ccc;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #333;
+}
+
+.btn-save {
+  background: #6366f1;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: white;
+}
+
+.btn-save:hover {
+  background: #4f46e5;
+}
+
+/* Toast Styles */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  background: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  min-width: 250px;
+  animation: slideIn 0.3s ease-out;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.toast-success {
+  border-left: 5px solid #10b981;
+  color: #065f46;
+}
+
+.toast-error {
+  border-left: 5px solid #ef4444;
+  color: #7f1d1d;
+}
+
+.toast-info {
+  border-left: 5px solid #3b82f6;
+  color: #1e3a8a;
+}
+
+.app.dark .toast {
+  background: #374151;
+  color: white;
+}
+
+.app.dark .toast-success {
+  color: #d1fae5;
+}
+
+.app.dark .toast-error {
+  color: #fee2e2;
+}
+
+.app.dark .toast-info {
+  color: #dbeafe;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 3000;
+}
+
+.app.dark .loading-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.loading-overlay p {
+  color: #374151;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.app.dark .loading-overlay p {
+  color: #f3f4f6;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #e5e7eb;
+  border-top: 5px solid #6366f1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Tag-based Multi-Select Styles */
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  min-height: 40px;
+}
+
+.app.dark .tag-container {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 12px;
+  background: #6366f1;
+  color: white;
+  border-radius: 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.tag-remove {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  margin: 0;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.tag-remove:hover {
+  opacity: 1;
+}
+
+/* Modern Select Box Styles */
+.form-group select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1.25em;
+  padding-right: 2.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1.5px solid #d1d5db;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.form-group select:hover {
+  border-color: #9ca3af;
+}
+
+.form-group select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.app.dark .form-group select {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+.app.dark .form-group select:hover {
+  border-color: #6b7280;
+}
+
+.app.dark .form-group select:focus {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1);
+}
+
+/* Profile Management Styles */
+.profile-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1rem;
+  padding: 12px;
+  background: #f0f9ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+}
+
+.app.dark .profile-actions {
+  background: #1e3a5f;
+  border-color: #3b82f6;
+}
+
+.btn-profile {
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-save-profile {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-save-profile:hover {
+  background: #2563eb;
+}
+
+.btn-load-profile {
+  background: #10b981;
+  color: white;
+}
+
+.btn-load-profile:hover {
+  background: #059669;
+}
+
+.btn-clear-profile {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-clear-profile:hover {
+  background: #dc2626;
+}
