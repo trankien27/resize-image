@@ -8,7 +8,7 @@ import { ToastContainer } from "./Toast";
 import type { ToastMessage } from "./Toast";
 
 // API Configuration
-const API_BASE_URL = 'http://trankien.somee.com/publish-portal/api';
+const API_BASE_URL = 'https://portal-api-2.onrender.com/api';
 
 interface ResizedImage {
   name: string;
