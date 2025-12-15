@@ -136,7 +136,13 @@ const ThemeUploadModal = ({ isOpen, onClose, onUpload, unmappedImageName, themeC
             thumbnail,
             isDisplayOnLiveview: isLiveView,
         });
-
+        setName("")
+        setColor("#f16d94")
+        setCategoryId(" ")
+        setSelectedThemeLists([])
+        setLayoutListId("")
+        setThumbnail(null)
+        setIsLiveView(true)
     };
 
     return (
