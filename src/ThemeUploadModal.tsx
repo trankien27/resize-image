@@ -111,14 +111,14 @@ const ThemeUploadModal = ({ isOpen, onClose, onUpload, unmappedImageName, themeC
         }
     };
 
-    const handleThemeListChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const selectedId = Number(e.target.value);
-        if (selectedId && !selectedThemeLists.includes(selectedId)) {
-            setSelectedThemeLists([...selectedThemeLists, selectedId]);
-        }
-        // Reset select to placeholder
-        e.target.value = "";
-    };
+    // const handleThemeListChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    //     const selectedId = Number(e.target.value);
+    //     if (selectedId && !selectedThemeLists.includes(selectedId)) {
+    //         setSelectedThemeLists([...selectedThemeLists, selectedId]);
+    //     }
+    //     // Reset select to placeholder
+    //     e.target.value = "";
+    // };
 
     const removeThemeList = (idToRemove: number) => {
         setSelectedThemeLists(selectedThemeLists.filter(id => id !== idToRemove));
