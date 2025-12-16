@@ -123,7 +123,7 @@ function App() {
         }
 
         // Fetch theme lists
-        const listResponse = await fetch(`${API_BASE_URL}/ThemeListProxy?pageIndex=0&pageSize=100`, {
+        const listResponse = await fetch(`${API_BASE_URL}/ThemeListProxy?pageIndex=0&pageSize=1000`, {
           headers: { 'accept': '*/*' }
         });
         const listJson: ThemeListResponse = await listResponse.json();

@@ -38,6 +38,12 @@ const ThemeUploadModal = ({ isOpen, onClose, onUpload, unmappedImageName, themeC
     const [currentProfileName, setCurrentProfileName] = useState("");
     const [newProfileName, setNewProfileName] = useState("");
 
+    // Search states
+    const [categorySearch, setCategorySearch] = useState("");
+    const [themeListSearch, setThemeListSearch] = useState("");
+    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+    const [showThemeListDropdown, setShowThemeListDropdown] = useState(false);
+
     // Load all saved profiles from localStorage on mount
     React.useEffect(() => {
         const savedProfiles = localStorage.getItem('themeUploadProfiles');
@@ -144,6 +150,15 @@ const ThemeUploadModal = ({ isOpen, onClose, onUpload, unmappedImageName, themeC
         setThumbnail(null)
         setIsLiveView(true)
     };
+
+    // Filtered lists
+    const filteredCategories = themeCategories.filter(cat =>
+        cat.name.toLowerCase().includes(categorySearch.toLowerCase())
+    );
+
+    const filteredThemeLists = themeLists
+        .filter(list => !selectedThemeLists.includes(list.id))
+        .filter(list => list.name.toLowerCase().includes(themeListSearch.toLowerCase()));
 
     return (
         <div className="modal-overlay" style={{
@@ -298,21 +313,69 @@ const ThemeUploadModal = ({ isOpen, onClose, onUpload, unmappedImageName, themeC
                         {/* Danh mục */}
                         <div className="form-group" style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '12px', alignItems: 'center' }}>
                             <label style={{ fontSize: '14px', fontWeight: '500' }}>Danh mục:</label>
-                            <select
-                                value={categoryId}
-                                onChange={(e) => setCategoryId(e.target.value)}
-                                style={{
-                                    padding: '8px 12px',
-                                    border: '1px solid #d1d5db',
-                                    borderRadius: '6px',
-                                    fontSize: '14px'
-                                }}
-                            >
-                                <option value="">-- Chọn danh mục --</option>
-                                {themeCategories.map(cat => (
-                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                ))}
-                            </select>
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    type="text"
+                                    placeholder="🔍 Tìm kiếm và chọn danh mục..."
+                                    value={categorySearch}
+                                    onChange={(e) => setCategorySearch(e.target.value)}
+                                    onFocus={() => setShowCategoryDropdown(true)}
+                                    onBlur={() => {
+                                        setTimeout(() => setShowCategoryDropdown(false), 200);
+                                    }}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: showCategoryDropdown ? '6px 6px 0 0' : '6px',
+                                        fontSize: '14px'
+                                    }}
+                                />
+                                {showCategoryDropdown && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '100%',
+                                        left: 0,
+                                        right: 0,
+                                        maxHeight: '200px',
+                                        overflowY: 'auto',
+                                        background: 'white',
+                                        border: '1px solid #d1d5db',
+                                        borderTop: 'none',
+                                        borderRadius: '0 0 6px 6px',
+                                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                                        zIndex: 10
+                                    }}>
+                                        {filteredCategories.length === 0 ? (
+                                            <div style={{ padding: '8px 12px', color: '#9ca3af', fontSize: '14px' }}>
+                                                Không tìm thấy danh mục
+                                            </div>
+                                        ) : (
+                                            filteredCategories.map(cat => (
+                                                <div
+                                                    key={cat.id}
+                                                    onClick={() => {
+                                                        setCategoryId(String(cat.id));
+                                                        setCategorySearch(cat.name);
+                                                        setShowCategoryDropdown(false);
+                                                    }}
+                                                    style={{
+                                                        padding: '8px 12px',
+                                                        cursor: 'pointer',
+                                                        fontSize: '14px',
+                                                        background: categoryId === String(cat.id) ? '#eff6ff' : 'white',
+                                                        borderBottom: '1px solid #f3f4f6'
+                                                    }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.background = categoryId === String(cat.id) ? '#eff6ff' : 'white'}
+                                                >
+                                                    {cat.name}
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Theme Lists */}
@@ -360,22 +423,71 @@ const ThemeUploadModal = ({ isOpen, onClose, onUpload, unmappedImageName, themeC
                                         })}
                                     </div>
                                 )}
-                                <select
-                                    onChange={handleThemeListChange}
-                                    value=""
-                                    style={{
-                                        width: '100%',
-                                        padding: '8px 12px',
-                                        border: '1px solid #d1d5db',
-                                        borderRadius: '6px',
-                                        fontSize: '14px'
-                                    }}
-                                >
-                                    <option value="">-- Chọn để thêm --</option>
-                                    {themeLists.filter(list => !selectedThemeLists.includes(list.id)).map(list => (
-                                        <option key={list.id} value={list.id}>{list.name}</option>
-                                    ))}
-                                </select>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="🔍 Tìm kiếm và chọn theme list..."
+                                        value={themeListSearch}
+                                        onChange={(e) => setThemeListSearch(e.target.value)}
+                                        onFocus={() => setShowThemeListDropdown(true)}
+                                        onBlur={() => {
+                                            setTimeout(() => setShowThemeListDropdown(false), 200);
+                                        }}
+                                        style={{
+                                            width: '100%',
+                                            padding: '8px 12px',
+                                            border: '1px solid #d1d5db',
+                                            borderRadius: showThemeListDropdown ? '6px 6px 0 0' : '6px',
+                                            fontSize: '14px'
+                                        }}
+                                    />
+                                    {showThemeListDropdown && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: 0,
+                                            right: 0,
+                                            maxHeight: '200px',
+                                            overflowY: 'auto',
+                                            background: 'white',
+                                            border: '1px solid #d1d5db',
+                                            borderTop: 'none',
+                                            borderRadius: '0 0 6px 6px',
+                                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                                            zIndex: 10
+                                        }}>
+                                            {filteredThemeLists.length === 0 ? (
+                                                <div style={{ padding: '8px 12px', color: '#9ca3af', fontSize: '14px' }}>
+                                                    Không tìm thấy theme list
+                                                </div>
+                                            ) : (
+                                                filteredThemeLists.map(list => (
+                                                    <div
+                                                        key={list.id}
+                                                        onClick={() => {
+                                                            if (!selectedThemeLists.includes(list.id)) {
+                                                                setSelectedThemeLists([...selectedThemeLists, list.id]);
+                                                                setThemeListSearch("");
+                                                            }
+                                                            setShowThemeListDropdown(false);
+                                                        }}
+                                                        style={{
+                                                            padding: '8px 12px',
+                                                            cursor: 'pointer',
+                                                            fontSize: '14px',
+                                                            background: 'white',
+                                                            borderBottom: '1px solid #f3f4f6'
+                                                        }}
+                                                        onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
+                                                        onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
+                                                    >
+                                                        {list.name}
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
