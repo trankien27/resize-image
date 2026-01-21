@@ -1,11 +1,12 @@
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { useRef, useState, useEffect } from "react";
-import './App.css';
+import "./App.css";
 import ComingSoonModal from "./ComingSoonModal";
 import ThemeUploadModal from "./ThemeUploadModal";
-import { ToastContainer } from "./Toast";
-import type { ToastMessage } from "./Toast";
+
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -70,71 +71,57 @@ interface LayoutResponse {
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
   const [isModalOpen, setModalOpen] = useState(false);
   const [isUploadModalOpen, setUploadModalOpen] = useState(false);
+
   const [images, setImages] = useState<ResizedImage[]>([]);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+
   const [darkMode, setDarkMode] = useState<boolean>(false);
+
   const [layoutMap, setLayoutMap] = useState<Record<string, LayoutItem>>({});
   const [themeCategories, setThemeCategories] = useState<ThemeCategory[]>([]);
   const [themeLists, setThemeLists] = useState<ThemeList[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
 
-  const addToast = (message: string, type: "success" | "error" | "info" = "info") => {
-    setToasts(prev => [...prev, { id: Date.now(), message, type }]);
-  };
-
-  const removeToast = (id: number) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  };
-
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // Fetch layouts
-        const layoutResponse = await fetch(`${API_BASE_URL}/LayoutProxy`, {
-          headers: { 'accept': '*/*' }
-        });
+        const [layoutResponse, categoryResponse, listResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/LayoutProxy`, { headers: { accept: "*/*" } }),
+          fetch(`${API_BASE_URL}/ThemeCategoryProxy`, { headers: { accept: "*/*" } }),
+          fetch(`${API_BASE_URL}/ThemeListProxy?pageIndex=0&pageSize=1000`, { headers: { accept: "*/*" } }),
+        ]);
+
         const layoutJson: LayoutResponse = await layoutResponse.json();
         if (layoutJson.message === "Success" && layoutJson.data?.items) {
           const map: Record<string, LayoutItem> = {};
-          layoutJson.data.items.forEach(item => {
-            if (item.code) {
-              map[item.code] = item;
-            }
+          layoutJson.data.items.forEach((item) => {
+            if (item.code) map[item.code] = item;
           });
           setLayoutMap(map);
         }
 
-        // Fetch theme categories
-        const categoryResponse = await fetch(`${API_BASE_URL}/ThemeCategoryProxy`, {
-          headers: { 'accept': '*/*' }
-        });
         const categoryJson: ThemeCategoryResponse = await categoryResponse.json();
         if (categoryJson.message === "Success" && categoryJson.data?.items) {
-          setThemeCategories(categoryJson.data.items.filter(cat => cat.isActive));
-          console.log("category", categoryJson.data.items.filter(cat => cat.isActive));
+          setThemeCategories(categoryJson.data.items.filter((cat) => cat.isActive));
         }
 
-        // Fetch theme lists
-        const listResponse = await fetch(`${API_BASE_URL}/ThemeListProxy?pageIndex=0&pageSize=1000`, {
-          headers: { 'accept': '*/*' }
-        });
         const listJson: ThemeListResponse = await listResponse.json();
         if (listJson.message === "Success" && listJson.data?.items) {
-          setThemeLists(listJson.data.items.filter(list => list.isActive));
+          setThemeLists(listJson.data.items.filter((list) => list.isActive));
         }
 
-        addToast("Đã tải dữ liệu thành công", "success");
+        toast.success("Đã tải dữ liệu thành công");
       } catch (error) {
         console.error("Failed to fetch data:", error);
-        addToast("Không thể tải dữ liệu từ server", "error");
+        toast.error("Không thể tải dữ liệu từ server");
       } finally {
         setIsLoading(false);
       }
@@ -143,15 +130,20 @@ function App() {
     fetchData();
   }, []);
 
-  const handleShowComingSoon = () => setModalOpen(true);
+  const handleShowComingSoon = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    setModalOpen(true);
+  };
   const handleCloseModal = () => setModalOpen(false);
 
   const handleFiles = (files: FileList) => {
     Array.from(files).forEach(async (file) => {
       const ext = file.name.split(".").pop()?.toLowerCase();
+
       if (ext === "zip") {
         const zip = new JSZip();
         const loaded = await zip.loadAsync(file);
+
         loaded.forEach(async (_, entry) => {
           if (!entry.dir && /\.(png|jpg|jpeg|webp)$/i.test(entry.name)) {
             const blob = await entry.async("blob");
@@ -159,10 +151,17 @@ function App() {
             handleImageFile(newFile);
           }
         });
-      } else if (/image\/(png|jpeg|jpg|webp)/.test(file.type)) {
+
+        return;
+      }
+
+      if (/image\/(png|jpeg|jpg|webp)/.test(file.type)) {
         handleImageFile(file);
-      } else if (ext === "rar") {
-        addToast("Không hỗ trợ file .rar. Vui lòng dùng .zip.", "error");
+        return;
+      }
+
+      if (ext === "rar") {
+        toast.error("Không hỗ trợ file .rar. Vui lòng dùng .zip.");
       }
     });
   };
@@ -171,6 +170,7 @@ function App() {
     const fileName = file.name.split(".")[0];
     const code = Object.keys(layoutMap).find((k) => fileName.toUpperCase().includes(k));
     const layoutItem = code ? layoutMap[code] : null;
+
     const targetW = layoutItem?.width;
     const targetH = layoutItem?.height;
 
@@ -178,14 +178,21 @@ function App() {
     reader.onload = (e) => {
       const img = new Image();
       img.src = e.target?.result as string;
+
       img.onload = () => {
-        const canvas = canvasRef.current!;
-        const ctx = canvas.getContext("2d")!;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
         const w = targetW ?? img.width;
         const h = targetH ?? img.height;
+
         canvas.width = w;
         canvas.height = h;
         ctx.drawImage(img, 0, 0, w, h);
+
         const dataURL = canvas.toDataURL("image/png");
 
         setImages((prev) => [
@@ -203,20 +210,28 @@ function App() {
         ]);
       };
     };
+
     reader.readAsDataURL(file);
   };
 
   const downloadImage = (img: ResizedImage) => {
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
     const image = new Image();
     image.src = img.src;
+
     image.onload = () => {
       const w = img.isCustom ? img.customWidth : img.width;
       const h = img.isCustom ? img.customHeight : img.height;
+
       canvas.width = w;
       canvas.height = h;
       ctx.drawImage(image, 0, 0, w, h);
+
       const data = canvas.toDataURL("image/png");
       saveAs(data, img.name);
     };
@@ -224,18 +239,25 @@ function App() {
 
   const downloadAll = async () => {
     const zip = new JSZip();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
     for (const img of images) {
-      const canvas = canvasRef.current!;
-      const ctx = canvas.getContext("2d")!;
       const image = new Image();
       image.src = img.src;
+
       await new Promise<void>((res) => {
         image.onload = () => {
           const w = img.isCustom ? img.customWidth : img.width;
           const h = img.isCustom ? img.customHeight : img.height;
+
           canvas.width = w;
           canvas.height = h;
           ctx.drawImage(image, 0, 0, w, h);
+
           canvas.toBlob((blob) => {
             if (blob) zip.file(img.name, blob);
             res();
@@ -243,6 +265,7 @@ function App() {
         };
       });
     }
+
     const zipBlob = await zip.generateAsync({ type: "blob" });
     saveAs(zipBlob, "exported-images.zip");
   };
@@ -262,7 +285,7 @@ function App() {
       // Determine thumbnail
       let thumbnailBlob: Blob | File | null = data.thumbnail;
       let unmappedImageName = "";
-      const unmappedImage = images.find(img => !img.layoutId);
+      const unmappedImage = images.find((img) => !img.layoutId);
 
       if (!thumbnailBlob && unmappedImage) {
         const res = await fetch(unmappedImage.src);
@@ -275,13 +298,12 @@ function App() {
         formData.append("Thumbnail", thumbnailBlob, filename);
       }
 
-      // Convert base64 images to Blobs
+      // Convert base64 images to Blobs (only mapped layouts)
       const imageBlobs: Record<number, Blob> = {};
       for (const img of images) {
         if (img.layoutId) {
           const res = await fetch(img.src);
-          const blob = await res.blob();
-          imageBlobs[img.layoutId] = blob;
+          imageBlobs[img.layoutId] = await res.blob();
         }
       }
 
@@ -298,21 +320,21 @@ function App() {
       }
 
       const response = await fetch(`${API_BASE_URL}/ThemeProxy/upload-theme`, {
-        method: 'POST',
+        method: "POST",
         body: formData,
       });
 
       if (response.ok) {
-        addToast("Upload thành công!", "success");
+        toast.success("Upload thành công!");
         setUploadModalOpen(false);
       } else {
         const text = await response.text();
-        addToast(`Upload thất bại! ${text}`, "error");
+        toast.error(`Upload thất bại! ${text}`);
         console.error("Upload failed", text);
       }
     } catch (e) {
       console.error(e);
-      addToast("Có lỗi xảy ra khi upload", "error");
+      toast.error("Có lỗi xảy ra khi upload");
     } finally {
       setIsLoading(false);
     }
@@ -328,19 +350,29 @@ function App() {
 
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
-    addToast("Đã xóa ảnh", "info");
+    toast.info("Đã xóa ảnh");
   };
 
   const clearAll = () => {
     setImages([]);
-    addToast("Đã xóa tất cả ảnh", "info");
+    toast.info("Đã xóa tất cả ảnh");
   };
 
-  const unmappedImage = images.find(img => !img.layoutId);
+  const unmappedImage = images.find((img) => !img.layoutId);
 
   return (
     <div className={darkMode ? "app dark" : "app"}>
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      {/* Toastify container (1 lần duy nhất) */}
+      <ToastContainer
+        position="top-right"
+        autoClose={4000}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme={darkMode ? "dark" : "light"}
+      />
+
       {isLoading && (
         <div className="loading-overlay">
           <div className="spinner"></div>
@@ -351,27 +383,41 @@ function App() {
       <div className="taskbar">
         <div className="taskbar-left">
           <nav className="menu">
-            <a href="#" onClick={handleShowComingSoon}>Compress</a>
-            <a href="#" className="active">Resize</a>
-            <a href="#" onClick={handleShowComingSoon}>Crop</a>
-            <a href="#" onClick={handleShowComingSoon}>Convert</a>
-            <a href="#" onClick={handleShowComingSoon}>More</a>
+            <a href="#" onClick={handleShowComingSoon}>
+              Compress
+            </a>
+            <a href="#" className="active">
+              Resize
+            </a>
+            <a href="#" onClick={handleShowComingSoon}>
+              Crop
+            </a>
+            <a href="#" onClick={handleShowComingSoon}>
+              Convert
+            </a>
+            <a href="#" onClick={handleShowComingSoon}>
+              More
+            </a>
           </nav>
         </div>
         <div className="taskbar-right">
           <button onClick={() => setDarkMode(!darkMode)}>{darkMode ? "🌞 Light" : "🌙 Dark"}</button>
-          <button className="login-btn" onClick={handleShowComingSoon}>Đăng nhập</button>
+          <button className="login-btn" onClick={() => setModalOpen(true)}>
+            Đăng nhập
+          </button>
         </div>
       </div>
 
       <div className="container">
-        <div className="dropzone"
+        <div
+          className="dropzone"
           onDrop={(e) => {
             e.preventDefault();
             handleFiles(e.dataTransfer.files);
           }}
           onDragOver={(e) => e.preventDefault()}
-          onClick={() => document.getElementById("fileInput")?.click()}>
+          onClick={() => document.getElementById("fileInput")?.click()}
+        >
           <p>📂 Click hoặc kéo & thả ảnh / file .zip / folder vào đây</p>
           <input
             id="fileInput"
@@ -391,9 +437,19 @@ function App() {
             <div className="panel-header">
               <h2>📋 Danh sách ảnh ({images.length})</h2>
               <div>
-                <button onClick={downloadAll} className="download-all">📦 Tải tất cả (.zip)</button>
-                <button onClick={() => setUploadModalOpen(true)} className="download-all" style={{ marginLeft: 10, backgroundColor: "#E91E63" }}>🚀 Upload Theme</button>
-                <button onClick={clearAll} className="btn-remove" style={{ marginLeft: 10 }}>🗑️ Xóa tất cả</button>
+                <button onClick={downloadAll} className="download-all">
+                  📦 Tải tất cả (.zip)
+                </button>
+                <button
+                  onClick={() => setUploadModalOpen(true)}
+                  className="download-all"
+                  style={{ marginLeft: 10, backgroundColor: "#E91E63" }}
+                >
+                  🚀 Upload Theme
+                </button>
+                <button onClick={clearAll} className="btn-remove" style={{ marginLeft: 10 }}>
+                  🗑️ Xóa tất cả
+                </button>
               </div>
             </div>
 
@@ -427,12 +483,18 @@ function App() {
                       />
                     </div>
                   ) : (
-                    <p className="image-size">{img.width} × {img.height}</p>
+                    <p className="image-size">
+                      {img.width} × {img.height}
+                    </p>
                   )}
 
                   <div className="image-actions">
-                    <button onClick={() => downloadImage(img)} className="btn-green">⬇️ Tải</button>
-                    <button onClick={() => removeImage(i)} className="btn-red">❌ Xóa</button>
+                    <button onClick={() => downloadImage(img)} className="btn-green">
+                      ⬇️ Tải
+                    </button>
+                    <button onClick={() => removeImage(i)} className="btn-red">
+                      ❌ Xóa
+                    </button>
                   </div>
                 </div>
               ))}
@@ -448,6 +510,7 @@ function App() {
           </div>
         )}
       </div>
+
       <ComingSoonModal isOpen={isModalOpen} onClose={handleCloseModal} />
       <ThemeUploadModal
         isOpen={isUploadModalOpen}
